@@ -186,7 +186,10 @@ class Game:
         NewSnakeCoordinates = self.calculateNewCoordinates()
         # complete the method implementation below
         # Check if the new coordinates overlap with the prey
-        if NewSnakeCoordinates[-1] == self.prey_coordinates:
+        if NewSnakeCoordinates == (
+            gui.canvas.coords(gui.preyIcon)[0] + 5,
+            gui.canvas.coords(gui.preyIcon)[1] + 5,
+        ):
             self.score += 1
             self.createNewPrey()
 
