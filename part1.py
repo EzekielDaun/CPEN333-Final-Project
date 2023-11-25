@@ -145,7 +145,6 @@ class Game:
             # complete the method implementation below
             self.move()
             time.sleep(SPEED)  # Add a delay to control the snake's speed
-            # pass #remove this line from your implemenation
 
     def whenAnArrowKeyIsPressed(self, e) -> None:
         """
@@ -185,21 +184,28 @@ class Game:
         """
         NewSnakeCoordinates = self.calculateNewCoordinates()
         # complete the method implementation below
+
         # Check if the new coordinates overlap with the prey
         if NewSnakeCoordinates == (
             gui.canvas.coords(gui.preyIcon)[0] + 5,
             gui.canvas.coords(gui.preyIcon)[1] + 5,
         ):
+            # Update the score and create a new prey
             self.score += 1
             self.createNewPrey()
+            # Add a "score" task to the queue
+            self.queue.put({"score": self.score})
+        else:
+            # Remove the tail of the snake if not hit prey
+            self.snakeCoordinates.pop(0)
 
-        self.isGameOver(NewSnakeCoordinates)
-
-        self.snakeCoordinates.pop(0)  # Remove the tail of the snake
         self.snakeCoordinates.append(NewSnakeCoordinates)  # Add the new head
 
+        # Check if the game is over
+        self.isGameOver(NewSnakeCoordinates)
+
         # Add a "move" task to the queue
-        self.queue.put({"move": self.snakeCoordinates, "score": self.score})
+        self.queue.put({"move": self.snakeCoordinates})
 
     def calculateNewCoordinates(self) -> tuple:
         """
@@ -212,14 +218,17 @@ class Game:
         """
         lastX, lastY = self.snakeCoordinates[-1]
         # complete the method implementation below
+
+        # Calculate the new coordinates based on the direction
+        # Move 10 pixels at a time
         if self.direction == "Left":
-            new_coordinates = (lastX - SNAKE_ICON_WIDTH, lastY)
+            new_coordinates = (lastX - 10, lastY)
         elif self.direction == "Right":
-            new_coordinates = (lastX + SNAKE_ICON_WIDTH, lastY)
+            new_coordinates = (lastX + 10, lastY)
         elif self.direction == "Up":
-            new_coordinates = (lastX, lastY - SNAKE_ICON_WIDTH)
+            new_coordinates = (lastX, lastY - 10)
         elif self.direction == "Down":
-            new_coordinates = (lastX, lastY + SNAKE_ICON_WIDTH)
+            new_coordinates = (lastX, lastY + 10)
 
         return new_coordinates
 
@@ -233,12 +242,14 @@ class Game:
         """
         x, y = snakeCoordinates
         # complete the method implementation below
+
+        # Check if the snake has passed any wall or bit itself
         if (
             x < 0
             or x >= WINDOW_WIDTH
             or y < 0
             or y >= WINDOW_HEIGHT
-            or snakeCoordinates in self.snakeCoordinates[:-1]
+            or snakeCoordinates in self.snakeCoordinates[:-1]  # exclude the head
         ):
             self.gameNotOver = False
             # Add a "game_over" task to the queue
@@ -257,9 +268,11 @@ class Game:
         """
         THRESHOLD = 15  # sets how close prey can be to borders
         # complete the method implementation below
+
         # Generate random coordinates for the prey, ensuring it's away from the walls
-        prey_x = random.randint(THRESHOLD, WINDOW_WIDTH - THRESHOLD)
-        prey_y = random.randint(THRESHOLD, WINDOW_HEIGHT - THRESHOLD)
+        # Since we move 10 pixels at a time, we need to make sure the coordinates are multiples of 10 + 5
+        prey_x = random.randint(THRESHOLD, WINDOW_WIDTH - THRESHOLD) // 10 * 10 + 5
+        prey_y = random.randint(THRESHOLD, WINDOW_HEIGHT - THRESHOLD) // 10 * 10 + 5
 
         # Calculate the prey's rectangle coordinates (x1, y1, x2, y2)
         prey_coordinates = (prey_x - 5, prey_y - 5, prey_x + 5, prey_y + 5)
